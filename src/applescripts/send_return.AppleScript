@@ -3,12 +3,12 @@ on run argv
 	delay 0.25
 	tell application "System Events"
 		tell process "Messages"
+			set value of text area 1 of scroll area 4 of splitter group 1 of window 1 to item 1 of argv
 			delay 0.1
 			keystroke return
-		end tell
-		delay 0.1
+			keystroke return
 			delay 0.1
-			-- set visible to false
+		end tell
 		key down command
 		keystroke tab
 		key up command
