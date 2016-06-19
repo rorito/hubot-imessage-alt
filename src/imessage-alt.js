@@ -49,51 +49,35 @@
         OLD_OSX = true;
     }
 
-    console.log("os: ", os.release());
-
     // discover whether the keyboard setting "Full Keyboard Access" is set to
     // "Text boxes and lists only" -- error or 1 or less
     // "All controls" (takes 2 tabs instead of one switching between elements in Messages.app) -- 2 or more
     var FULL_KEYBOARD_ACCESS = false; // false for text boxes and lists, true for all controls
 
-    //
-
     // It seems OSX 10.11 and higher needs to use defaults read -g AppleKeyboardUIMode
+    var detectAppleKeyboardUIMode = "";
     if (parseInt(os.release().split('.')[0]) >= 15) {
-        child_process.exec('defaults read -g AppleKeyboardUIMode', function (err, stdout, stderr) {
-            if (err instanceof Error) {
-                // return because we already have false set and error means text boxes and lists only
-                return;
-            }
-
-            console.log("AppleKeyboardUIMode: ", stdout);
-
-            //stdout can return the text error
-            // The domain/default pair of (kCFPreferencesAnyApplication, AppleKeyboardUIMode) does not exist
-            //This can be resolved by editing System Preferences. For older Mac systems select the Language and Text icon and add US English to the Languages list using the check box. For newer systems select the Language and Region icon and add English to the list, making it the primary language.
-
-            if (parseInt(stdout) > 1) {
-                FULL_KEYBOARD_ACCESS = true;
-            }
-        });
+        detectAppleKeyboardUIMode = 'defaults read -g AppleKeyboardUIMode';
     } else {
-        child_process.exec('defaults read NSGlobalDomain AppleKeyboardUIMode', function (err, stdout, stderr) {
-            if (err instanceof Error) {
-                // return because we already have false set and error means text boxes and lists only
-                return;
-            }
-
-            console.log("AppleKeyboardUIMode: ", stdout);
-
-            //stdout can return the text error
-            // The domain/default pair of (kCFPreferencesAnyApplication, AppleKeyboardUIMode) does not exist
-            //This can be resolved by editing System Preferences. For older Mac systems select the Language and Text icon and add US English to the Languages list using the check box. For newer systems select the Language and Region icon and add English to the list, making it the primary language.
-
-            if (parseInt(stdout) > 1) {
-                FULL_KEYBOARD_ACCESS = true;
-            }
-        });
+        detectAppleKeyboardUIMode = 'defaults read NSGlobalDomain AppleKeyboardUIMode';
     }
+
+    child_process.exec(detectAppleKeyboardUIMode, function (err, stdout, stderr) {
+        if (err instanceof Error) {
+            // return because we already have false set and error means text boxes and lists only
+            return;
+        }
+
+        console.log("AppleKeyboardUIMode: ", stdout);
+
+        //stdout can return the text error
+        // The domain/default pair of (kCFPreferencesAnyApplication, AppleKeyboardUIMode) does not exist
+        // This can be resolved by editing System Preferences. For older Mac systems select the Language and Text icon and add US English to the Languages list using the check box. For newer systems select the Language and Region icon and add English to the list, making it the primary language.
+
+        if (parseInt(stdout) > 1) {
+            FULL_KEYBOARD_ACCESS = true;
+        }
+    });
 
     // read the Messages.app sqlite db
     var db = new sqlite3.Database(file);
