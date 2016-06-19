@@ -17,11 +17,11 @@
         hasProp = {}.hasOwnProperty,
         slice = [].slice,
         indexOf = [].indexOf || function (item) {
-            for (var i = 0, l = this.length; i < l; i++) {
-                if (i in this && this[i] === item) return i;
-            }
-            return -1;
-        };
+                for (var i = 0, l = this.length; i < l; i++) {
+                    if (i in this && this[i] === item) return i;
+                }
+                return -1;
+            };
 
     ref = require('hubot'), User = ref.User, Robot = ref.Robot, Adapter = ref.Adapter, Message = ref.Message, TextMessage = ref.TextMessage, Response = ref.Response;
 
@@ -54,7 +54,7 @@
     // "All controls" (takes 2 tabs instead of one switching between elements in Messages.app) -- 2 or more
     var FULL_KEYBOARD_ACCESS = false; // false for text boxes and lists, true for all controls
 
-    child_process.exec('defaults read NSGlobalDomain AppleKeyboardUIMode', function(err, stdout, stderr) {
+    child_process.exec('defaults read NSGlobalDomain AppleKeyboardUIMode', function (err, stdout, stderr) {
         if (err instanceof Error) {
             // return because we already have false set and error means text boxes and lists only
             return;
@@ -74,13 +74,60 @@
     var sending = false;
 
 
+    function checkMessageText(messageId) {
+        var SQL = "SELECT DISTINCT message.ROWID, handle.id, message.text, message.is_from_me, message.date, message.date_delivered, message.date_read, chat.chat_identifier, chat.display_name FROM message LEFT OUTER JOIN chat ON chat.room_name = message.cache_roomnames LEFT OUTER JOIN handle ON handle.ROWID = message.handle_id WHERE message.service = 'iMessage' AND message.ROWID = " + messageId + " ORDER BY message.date DESC LIMIT 500";
+        if (OLD_OSX) {
+            SQL = "SELECT DISTINCT message.ROWID, handle.id, message.text, message.is_from_me, message.date, message.date_delivered, message.date_read FROM message LEFT OUTER JOIN chat LEFT OUTER JOIN handle ON handle.ROWID = message.handle_id WHERE message.service = 'iMessage' AND message.ROWID = " + messageId + " ORDER BY message.date DESC LIMIT 500";
+        }
+        db.serialize(function () {
+            var arr = [];
+            db.all(SQL, function (err, rows) {
+                if (err) throw err;
+                // should only be one result since we are selecting by id but I am looping anyways
+                for (var i = 0; i < rows.length; i++) {
+                    var row = rows[i];
+                    console.log(row);
+                    if (row.is_from_me || !row || !row.text) {
+                        return;
+                    }
 
+                    var chatter;
+                    var isGroupChat = false;
+                    if (row.chat_identifier === null) {
+                        chatter = row.id;
+                    } else if (arr.indexOf(row.chat_identifier) < 0 && arr.indexOf(row.display_name + '-' + row.chat_identifier) < 0) {
+                        if (row.chat_identifier.indexOf('chat') > -1) {
+                            if (row.display_name && row.display_name !== "" && typeof(row.display_name) !== "undefined" || OLD_OSX) {
+                                chatter = row.display_name;
+                                isGroupChat = true;
+                            }
+                        } else {
+                            if (row.chat_identifier && row.chat_identifier !== "" && typeof(row.chat_identifier) !== "undefined") {
+                                chatter = row.chat_identifier;
+                                isGroupChat = true;
+                            }
+                        }
+                    }
 
+                    var rowText = row.text;
+                    // rowText = rowText.toLowerCase();
+                    if (rowText.split(' ').length < 2 && rowText.indexOf('.') === 0) {
+                        console.log('dropping: ' + rowText);
+                        return;
+                    }
 
+                    console.log("rowText: ", rowText);
+                    console.log("chatter: ", chatter);
 
-
-
-
+                    //if (rowText.split(' ', 1)[0] === '.i') {
+                    //    sendiMessage(rowText, chatter, isGroupChat);
+                    //} else if (rowText.split(' ', 1)[0] === '.r') {
+                    //    applescript.execFile(__dirname + '/applescripts/send_return.AppleScript', [], function(err, result) {});
+                    //}
+                }
+            });
+        });
+    }
 
     iMessageAdapter = (function (superClass) {
         extend(iMessageAdapter, superClass);
@@ -114,67 +161,12 @@
             //return this.send.apply(this, [envelope].concat(slice.call(strings)));
         };
 
-        iMessageAdapter.prototype.checkMessageText = function(messageId) {
-            var SQL = "SELECT DISTINCT message.ROWID, handle.id, message.text, message.is_from_me, message.date, message.date_delivered, message.date_read, chat.chat_identifier, chat.display_name FROM message LEFT OUTER JOIN chat ON chat.room_name = message.cache_roomnames LEFT OUTER JOIN handle ON handle.ROWID = message.handle_id WHERE message.service = 'iMessage' AND message.ROWID = " + messageId + " ORDER BY message.date DESC LIMIT 500";
-            if (OLD_OSX) {
-                SQL = "SELECT DISTINCT message.ROWID, handle.id, message.text, message.is_from_me, message.date, message.date_delivered, message.date_read FROM message LEFT OUTER JOIN chat LEFT OUTER JOIN handle ON handle.ROWID = message.handle_id WHERE message.service = 'iMessage' AND message.ROWID = " + messageId + " ORDER BY message.date DESC LIMIT 500";
-            }
-
-            db.serialize(function() {
-                var arr = [];
-                db.all(SQL, function(err, rows) {
-                    if (err) throw err;
-                    // should only be one result since we are selecting by id but I am looping anyways
-                    for (var i = 0; i < rows.length; i++) {
-                        var row = rows[i];
-                        console.log(row);
-                        if (row.is_from_me || !row || !row.text) {
-                            return;
-                        }
-
-                        var chatter;
-                        var isGroupChat = false;
-                        if (row.chat_identifier === null) {
-                            chatter = row.id;
-                        } else if (arr.indexOf(row.chat_identifier) < 0 && arr.indexOf(row.display_name+'-'+row.chat_identifier) < 0) {
-                            if (row.chat_identifier.indexOf('chat') > -1) {
-                                if (row.display_name && row.display_name !== "" && typeof(row.display_name) !== "undefined" || OLD_OSX) {
-                                    chatter = row.display_name;
-                                    isGroupChat = true;
-                                }
-                            } else {
-                                if (row.chat_identifier && row.chat_identifier !== "" && typeof(row.chat_identifier) !== "undefined") {
-                                    chatter = row.chat_identifier;
-                                    isGroupChat = true;
-                                }
-                            }
-                        }
-
-                        var rowText = row.text;
-                        // rowText = rowText.toLowerCase();
-                        if (rowText.split(' ').length < 2 && rowText.indexOf('.') === 0) {
-                            console.log('dropping: ' + rowText);
-                            return;
-                        }
-
-                        console.log("rowText: ", rowText);
-                        console.log("chatter: ", chatter);
-
-                        //if (rowText.split(' ', 1)[0] === '.i') {
-                        //    sendiMessage(rowText, chatter, isGroupChat);
-                        //} else if (rowText.split(' ', 1)[0] === '.r') {
-                        //    applescript.execFile(__dirname + '/applescripts/send_return.AppleScript', [], function(err, result) {});
-                        //}
-                    }
-                });
-            });
-        };
-
+        // Use setInterval to continually check iMessage for new messages every 3 seconds
         iMessageAdapter.prototype.run = function () {
 
             // Set the Last Seen ID
-            db.serialize(function() {
-                db.all("SELECT MAX(ROWID) AS max FROM message", function(err, rows) {
+            db.serialize(function () {
+                db.all("SELECT MAX(ROWID) AS max FROM message", function (err, rows) {
                     if (rows) {
                         var max = rows[0].max;
                         if (max > LAST_SEEN_ID) {
@@ -185,9 +177,9 @@
                 }.bind(this));
             }.bind(this));
 
-            setInterval(function() {
-                db.serialize(function() {
-                    db.all("SELECT MAX(ROWID) AS max FROM message", function(err, rows) {
+            setInterval(function () {
+                db.serialize(function () {
+                    db.all("SELECT MAX(ROWID) AS max FROM message", function (err, rows) {
                         if (rows && !sending) {
                             var max = rows[0].max;
                             if (max > LAST_SEEN_ID) {
