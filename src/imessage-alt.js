@@ -60,7 +60,7 @@
             return;
         }
 
-        if (parseInt(out) > 1) {
+        if (parseInt(stdout) > 1) {
             FULL_KEYBOARD_ACCESS = true;
         }
     });
