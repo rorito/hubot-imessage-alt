@@ -1,0 +1,31 @@
+{
+  "name": "hubot-imessage-alt",
+  "version": "0.0.1",
+  "author": "Rory Petty <rorypetty@gmail.com>",
+  "keywords": [
+    "github hubot imessage applescript adapter"
+  ],
+  "description": "An iMessage adapter for Hubot that mixes a couple different methods of interacting with iMessage",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://github.com/rorito/hubot-imessage-alt/raw/master/LICENSE"
+    }
+  ],
+  "main": "./src/imessage-alt.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/rorit/hubot-imessage-alt.git"
+  },
+  "dependencies": {
+    "applescript": "rorito/node-applescript",
+    "redis": ">=0.7.2",
+    "hiredis": ">=0.1.14",
+    "hubot": ">=2.4.6",
+    "imessagemodule": "0.1.7",
+    "sqlite3": "^3.0.4"
+  },
+  "engines": {
+    "node": ">= 0.8.x"
+  }
+}
