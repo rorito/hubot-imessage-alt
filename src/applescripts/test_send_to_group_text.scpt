@@ -23,6 +23,8 @@ on run argv
     (* the first argument of argv is a comma seperated list of the phone numbers and email addresses that make up the group chat *)
     set contact_info_list to my theSplit(item 1 of argv, ",")
 
+    (* TODO need to handle the case of only one item in the contact_info_list with no comma *)
+
     (* for each phone / email, create a iMessage buddy and add it to the participants list *)
     repeat with phoneOrEmail in contact_info_list
       set imessageBuddy to buddy phoneOrEmail of (service 1 whose service type is iMessage)
