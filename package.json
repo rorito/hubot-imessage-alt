@@ -19,10 +19,11 @@
   },
   "dependencies": {
     "applescript": "rorito/node-applescript",
-    "redis": ">=0.7.2",
+    "exec": "^0.1.3",
     "hiredis": ">=0.1.14",
     "hubot": ">=2.4.6",
     "imessagemodule": "0.1.7",
+    "redis": ">=0.7.2",
     "sqlite3": "^3.0.4"
   },
   "engines": {
