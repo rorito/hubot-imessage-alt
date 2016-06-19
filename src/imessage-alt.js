@@ -74,61 +74,6 @@
     var sending = false;
 
 
-    function checkMessageText(messageId) {
-        var SQL = "SELECT DISTINCT message.ROWID, handle.id, message.text, message.is_from_me, message.date, message.date_delivered, message.date_read, chat.chat_identifier, chat.display_name FROM message LEFT OUTER JOIN chat ON chat.room_name = message.cache_roomnames LEFT OUTER JOIN handle ON handle.ROWID = message.handle_id WHERE message.service = 'iMessage' AND message.ROWID = " + messageId + " ORDER BY message.date DESC LIMIT 500";
-        if (OLD_OSX) {
-            SQL = "SELECT DISTINCT message.ROWID, handle.id, message.text, message.is_from_me, message.date, message.date_delivered, message.date_read FROM message LEFT OUTER JOIN chat LEFT OUTER JOIN handle ON handle.ROWID = message.handle_id WHERE message.service = 'iMessage' AND message.ROWID = " + messageId + " ORDER BY message.date DESC LIMIT 500";
-        }
-        db.serialize(function () {
-            var arr = [];
-            db.all(SQL, function (err, rows) {
-                if (err) throw err;
-                // should only be one result since we are selecting by id but I am looping anyways
-                for (var i = 0; i < rows.length; i++) {
-                    var row = rows[i];
-                    console.log(row);
-                    if (row.is_from_me || !row || !row.text) {
-                        return;
-                    }
-
-                    var chatter;
-                    var isGroupChat = false;
-                    if (row.chat_identifier === null) {
-                        chatter = row.id;
-                    } else if (arr.indexOf(row.chat_identifier) < 0 && arr.indexOf(row.display_name + '-' + row.chat_identifier) < 0) {
-                        if (row.chat_identifier.indexOf('chat') > -1) {
-                            if (row.display_name && row.display_name !== "" && typeof(row.display_name) !== "undefined" || OLD_OSX) {
-                                chatter = row.display_name;
-                                isGroupChat = true;
-                            }
-                        } else {
-                            if (row.chat_identifier && row.chat_identifier !== "" && typeof(row.chat_identifier) !== "undefined") {
-                                chatter = row.chat_identifier;
-                                isGroupChat = true;
-                            }
-                        }
-                    }
-
-                    var rowText = row.text;
-                    // rowText = rowText.toLowerCase();
-                    if (rowText.split(' ').length < 2 && rowText.indexOf('.') === 0) {
-                        console.log('dropping: ' + rowText);
-                        return;
-                    }
-
-                    console.log("rowText: ", rowText);
-                    console.log("chatter: ", chatter);
-
-                    //if (rowText.split(' ', 1)[0] === '.i') {
-                    //    sendiMessage(rowText, chatter, isGroupChat);
-                    //} else if (rowText.split(' ', 1)[0] === '.r') {
-                    //    applescript.execFile(__dirname + '/applescripts/send_return.AppleScript', [], function(err, result) {});
-                    //}
-                }
-            });
-        });
-    }
-
     iMessageAdapter = (function (superClass) {
         extend(iMessageAdapter, superClass);
 
@@ -136,10 +81,75 @@
             this.robot = robot;
         }
 
+        iMessageAdapter.prototype.checkMessageText = function(messageId) {
+            var SQL = "SELECT DISTINCT message.ROWID, handle.id, message.text, message.is_from_me, message.date, message.date_delivered, message.date_read, chat.chat_identifier, chat.display_name FROM message LEFT OUTER JOIN chat ON chat.room_name = message.cache_roomnames LEFT OUTER JOIN handle ON handle.ROWID = message.handle_id WHERE message.service = 'iMessage' AND message.ROWID = " + messageId + " ORDER BY message.date DESC LIMIT 500";
+            if (OLD_OSX) {
+                SQL = "SELECT DISTINCT message.ROWID, handle.id, message.text, message.is_from_me, message.date, message.date_delivered, message.date_read FROM message LEFT OUTER JOIN chat LEFT OUTER JOIN handle ON handle.ROWID = message.handle_id WHERE message.service = 'iMessage' AND message.ROWID = " + messageId + " ORDER BY message.date DESC LIMIT 500";
+            }
+            var imAdapter = this;
+
+            db.serialize(function () {
+                var arr = [];
+                db.all(SQL, function (err, rows) {
+                    if (err) throw err;
+                    // should only be one result since we are selecting by id but I am looping anyways
+                    for (var i = 0; i < rows.length; i++) {
+                        var row = rows[i];
+                        console.log(row);
+                        if (row.is_from_me || !row || !row.text) {
+                            return;
+                        }
+
+                        var chatter;
+                        var isGroupChat = false;
+                        if (row.chat_identifier === null) {
+                            chatter = row.id;
+                        } else if (arr.indexOf(row.chat_identifier) < 0 && arr.indexOf(row.display_name + '-' + row.chat_identifier) < 0) {
+                            if (row.chat_identifier.indexOf('chat') > -1) {
+                                if (row.display_name && row.display_name !== "" && typeof(row.display_name) !== "undefined" || OLD_OSX) {
+                                    chatter = row.display_name;
+                                    isGroupChat = true;
+                                }
+                            } else {
+                                if (row.chat_identifier && row.chat_identifier !== "" && typeof(row.chat_identifier) !== "undefined") {
+                                    chatter = row.chat_identifier;
+                                    isGroupChat = true;
+                                }
+                            }
+                        }
+
+                        var message = row.text;
+
+                        console.log("message: ", message);
+                        console.log("iMessage user: ", chatter);
+
+                        imAdapter.receive(new TextMessage(chatter, message));
+
+                        //if (rowText.split(' ', 1)[0] === '.i') {
+                        //    sendiMessage(rowText, chatter, isGroupChat);
+                        //} else if (rowText.split(' ', 1)[0] === '.r') {
+                                // used to clear applescript errors
+                        //    applescript.execFile(__dirname + '/applescripts/send_return.AppleScript', [], function(err, result) {});
+                        //}
+                    }
+                });
+            });
+        }
+
         iMessageAdapter.prototype.send = function () {
-            //var envelope, i, len, message, results, script, strings, user;
-            //envelope = arguments[0], strings = 2 <= arguments.length ? slice.call(arguments, 1) : [];
-            //user = envelope.user.id;
+            console.log("iMessageAdapter.send");
+            var envelope, i, len, message, results, script, strings, user;
+            envelope = arguments[0], strings = 2 <= arguments.length ? slice.call(arguments, 1) : [];
+            user = envelope.user.id;
+            console.log(user);
+
+            script = path.resolve(__dirname, 'Send iMessage.applescript');
+            results = [];
+            for (i = 0, len = strings.length; i < len; i++) {
+                message = strings[i];
+                console.log(message);
+            }
+
             //if (indexOf.call(this.allowedUsers, user) >= 0) {
             //    script = path.resolve(__dirname, 'Send iMessage.applescript');
             //    results = [];
@@ -156,13 +166,15 @@
         };
 
         iMessageAdapter.prototype.reply = function () {
-            //var envelope, strings;
-            //envelope = arguments[0], strings = 2 <= arguments.length ? slice.call(arguments, 1) : [];
-            //return this.send.apply(this, [envelope].concat(slice.call(strings)));
+            console.log("iMessageAdapter.reply");
+            var envelope, strings;
+            envelope = arguments[0], strings = 2 <= arguments.length ? slice.call(arguments, 1) : [];
+            return this.send.apply(this, [envelope].concat(slice.call(strings)));
         };
 
         // Use setInterval to continually check iMessage for new messages every 3 seconds
         iMessageAdapter.prototype.run = function () {
+            var imAdapter = this;
 
             // Set the Last Seen ID
             db.serialize(function () {
@@ -184,13 +196,15 @@
                             var max = rows[0].max;
                             if (max > LAST_SEEN_ID) {
                                 for (LAST_SEEN_ID; LAST_SEEN_ID <= max; LAST_SEEN_ID++) {
-                                    checkMessageText(LAST_SEEN_ID);
+                                    imAdapter.checkMessageText(LAST_SEEN_ID);
                                 }
                             }
                         }
                     }.bind(this));
                 }.bind(this));
             }, 3000);
+
+            return this.emit('connected');
         };
 
         return iMessageAdapter;
