@@ -144,6 +144,8 @@
     //parse the list of group texts from an environment variable
     var GROUP_TEXTS = JSON.parse(process.env.MESSAGES_GROUP_TEXT_IDS);
 
+    console.log("Parse chat_identifiers and group texts from env vars: ", GROUP_TEXTS);
+
     function sendMessage(to, message, groupChat) {
         imessagemodule.sendMessage(to, message);
     }
