@@ -157,13 +157,14 @@
                             return;
                         }
 
-                        if (rowText.split(' ', 1)[0] === '.i') {
-                            sendiMessage(rowText, chatter, isGroupChat);
-                        } else if (rowText.split(' ', 1)[0] === '.r') {
-                            applescript.execFile(__dirname + '/applescripts/send_return.AppleScript', [], function(err, result) {});
-                        } else if (rowText.indexOf('http://') > -1 || rowText.indexOf('https://') > -1) {
-                            URLLookup(rowText, chatter, isGroupChat);
-                        }
+                        console.log("rowText: ", rowText);
+                        console.log("chatter: ", chatter);
+
+                        //if (rowText.split(' ', 1)[0] === '.i') {
+                        //    sendiMessage(rowText, chatter, isGroupChat);
+                        //} else if (rowText.split(' ', 1)[0] === '.r') {
+                        //    applescript.execFile(__dirname + '/applescripts/send_return.AppleScript', [], function(err, result) {});
+                        //}
                     }
                 });
             });
