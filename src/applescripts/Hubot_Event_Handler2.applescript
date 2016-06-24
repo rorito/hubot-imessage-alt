@@ -1,6 +1,15 @@
 (* WIP from the mac mini, trying to solve issues with sending and receiving from group chats *)
 
+on log_event(themessage, yesDo)
+	if yesDo then
+		set theLine to (do shell script "date +'%Y-%m-%d %H:%M:%S'" as string) & " " & themessage
+		do shell script "echo " & theLine & " [code]>>[/code] ~/gtbot-applescript.log"
+	end if
+end log_event
+
 using terms from application "Messages"
+
+	property doLogTF: true
 
 	on message received theMessage from theBuddy for theChat
 		set qMessage to quoted form of theMessage
@@ -8,7 +17,7 @@ using terms from application "Messages"
 
 		(* display dialog "message: " & qHandle & " " & qMessage & " " *)
 
-		set qScript to quoted form of "/Users/rory/test-gtbot/hubot-imessage-deploy/node_modules/hubot-imessage/src/messageReceiver.coffee"
+		set qScript to quoted form of "/Users/rory/test-gtbot/hubot-imessage-deploy/node_modules/hubot-imessage-alt/src/messageReceiver.js"
 
 		if (first name of theBuddy) is missing value then
 			set qName to quoted form of ""
@@ -17,13 +26,15 @@ using terms from application "Messages"
 		end if
 
 		do shell script "export PATH=/bin:/usr/bin:/usr/sbin:/sbin:/usr/local/bin && " & qScript & " " & qHandle & " " & qMessage & " " & qName
+
+		on log_event("message received from the buddy for thechat: " & qHandle & " " & qMessage, doLogTF)
 	end message received
 
 	on chat room message received theMessage from theBuddy for theChat
 		set qMessage to quoted form of theMessage
 		set qHandle to quoted form of (handle of theBuddy as string)
 
-		set qScript to quoted form of "/Users/rory/test-gtbot/hubot-imessage-deploy/node_modules/hubot-imessage/src/messageReceiver.coffee"
+		set qScript to quoted form of "/Users/rory/test-gtbot/hubot-imessage-deploy/node_modules/hubot-imessage-alt/src/messageReceiver.js"
 
 		if (first name of theBuddy) is missing value then
 			set qName to quoted form of ""
@@ -32,6 +43,8 @@ using terms from application "Messages"
 		end if
 
 		do shell script "export PATH=/bin:/usr/bin:/usr/sbin:/sbin:/usr/local/bin && " & qScript & " " & qHandle & " " & qMessage & " " & qName
+
+		on log_event("chat room message received from the buddy for thechat: " & qHandle & " " & qMessage, doLogTF)
 
 	end chat room message received
 
@@ -75,23 +88,20 @@ using terms from application "Messages"
 
 	on active chat message received theMessage
 		set qMessage to quoted form of theMessage
-		(* set qHandle to quoted form of (handle of theBuddy as string) *)
-
-		(* display dialog "active chat room msg recieved: " & qMessage & " " *)
+		on log_event("active chat room msg recieved: " & qMessage, doLogTF)
 	end active chat message received
 
 	on addressed chat room message received theMessage from theBuddy for theChat
 		set qMessage to quoted form of theMessage
 		set qHandle to quoted form of (handle of theBuddy as string)
-
-		display dialog "addressed chat room msg recieved: " & qHandle & " " & qMessage & " "
+		on log_event("addressed chat room msg recieved: " & qHandle & " " & qMessage, doLogTF)
 	end addressed chat room message received
 
 	on addressed message received theMessage from theBuddy for theChat
 		set qMessage to quoted form of theMessage
 		set qHandle to quoted form of (handle of theBuddy as string)
 
-		display dialog "addressed message received: " & qHandle & " " & qMessage & " "
+		on log_event("addressed message recieved: " & qHandle & " " & qMessage, doLogTF)
 	end addressed message received
 
 	on av chat started
