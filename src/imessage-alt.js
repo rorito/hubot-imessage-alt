@@ -252,8 +252,8 @@
             //this is a hack
             if (envelope.user.name.startsWith("chat")) {
                 //see if the chat identifier is a key in the GROUP_TEXTS JSON object we got from an env var
-                if (envelope.user in GROUP_TEXTS) {
-                    var gt_users_string = GROUP_TEXTS[envelope.user].join(",");
+                if (envelope.user.name in GROUP_TEXTS) {
+                    var gt_users_string = GROUP_TEXTS[envelope.user.name].join(",");
 
                     for (i = 0, len = strings.length; i < len; i++) {
                         sendMessageGT(gt_users_string, strings[i]);
