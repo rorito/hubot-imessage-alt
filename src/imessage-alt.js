@@ -298,9 +298,6 @@
                     console.log("run: ", msg, data.name);
 
                     return _this.receive(new TextMessage(user, msg));
-                    } else {
-                       return _this.robot.logger.info('Ignoring message from unauthorized iMessage user ' + data.userId);
-                    }
                 };
             })(this));
 
