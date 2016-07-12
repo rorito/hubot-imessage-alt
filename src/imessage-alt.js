@@ -280,9 +280,14 @@
             //this.allowedUsers = process.env.HUBOT_IMESSAGE_HANDLES.split(',');
             Pubsub.on('message', (function (_this) {
                 return function (channel, dataString) {
-                    var data, msg, ref1, user;
+                    var msg, ref1;
+                    var data = {};
+                    var user = {};
+
                     data = JSON.parse(dataString);
+
                     //if (ref1 = data.userId, indexOf.call(_this.allowedUsers, ref1) >= 0) {
+                    // TODO get userId from join query to store in robot brain
                     if ('userId' in data) {
                         user = _this.robot.brain.userForId(data.userId);    
                     }
@@ -292,10 +297,10 @@
                     msg = ("" + data.message).replace("Gtbot", "gtbot");
                     console.log("run: ", msg, data.name);
 
-                    //return _this.receive(new TextMessage(user, msg));
-                    //} else {
-                    //    return _this.robot.logger.info('Ignoring message from unauthorized iMessage user ' + data.userId);
-                    //}
+                    return _this.receive(new TextMessage(user, msg));
+                    } else {
+                       return _this.robot.logger.info('Ignoring message from unauthorized iMessage user ' + data.userId);
+                    }
                 };
             })(this));
 
