@@ -40,17 +40,14 @@ redis_channel = "hubot:incoming-imessage"
 LAST_SEEN_ID = 0
 
 # setup redis connection
-# r = redis.StrictRedis(host='localhost', port=6379, db=0)
-# pubsub = r.pubsub()
+r = redis.StrictRedis(host='localhost', port=6379, db=0)
+pubsub = r.pubsub()
 
 # Initially check for the last_seen_id
 for row in cursor.execute(max_id_query):
    		if row[0] > LAST_SEEN_ID:
    			LAST_SEEN_ID = row[0]
    			print "LAST_SEEN_ID: " + str(row[0])
-
-# #test
-# LAST_SEEN_ID = 22811
 
 # loop until termination
 while True: 
@@ -65,9 +62,6 @@ while True:
 			message = row[0]
 			sender_or_chat_identifier = row[1]
 
-			print message
-			print sender_or_chat_identifier
-
 			# if sender is None, it was from an individual user, not a group text
 			if not sender_or_chat_identifier:
 				for row in cursor.execute(getSenderInfoSQLQuery(LAST_SEEN_ID)):
@@ -79,11 +73,11 @@ while True:
 		
 		print "Message: " + str(LAST_SEEN_ID) + "-" + str(sender_or_chat_identifier) + "-" + message
 		
-		# r.publish(
-		# 	redis_channel, 
-		# 	json.dumps({
-		# 		"name": sender_or_chat_identifier,
-		# 		"message": message
-		# 	})
-		# )				
+		r.publish(
+			redis_channel, 
+			json.dumps({
+				"name": sender_or_chat_identifier,
+				"message": message
+			})
+		)				
 		

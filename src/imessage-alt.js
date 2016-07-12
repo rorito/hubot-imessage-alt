@@ -283,7 +283,10 @@
                     var data, msg, ref1, user;
                     data = JSON.parse(dataString);
                     //if (ref1 = data.userId, indexOf.call(_this.allowedUsers, ref1) >= 0) {
-                    user = _this.robot.brain.userForId(data.userId);
+                    if ('userId' in data) {
+                        user = _this.robot.brain.userForId(data.userId);    
+                    }
+                    
                     user.name = data.name;
                     user.room = 'iMessage';
                     msg = ("" + data.message).replace("Gtbot", "gtbot");
