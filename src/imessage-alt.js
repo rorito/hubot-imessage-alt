@@ -52,6 +52,7 @@
             return false;
         };
     }
+    // end polyfills
 
     var Adapter, AppleScript, Message, Pubsub, Redis, Response, Robot, TextMessage, User, iMessageAdapter, path, ref,
         extend = function (child, parent) {
@@ -77,22 +78,20 @@
             };
 
     ref = require('hubot'), User = ref.User, Robot = ref.Robot, Adapter = ref.Adapter, Message = ref.Message, TextMessage = ref.TextMessage, Response = ref.Response;
-    path = require('path');
-    var fs = require("fs");
-
-    var exists = fs.existsSync(file);
-    if (!exists) {
-        return;
-    }
 
     AppleScript = require('applescript');
-    var imessagemodule = require('iMessageModule');
+
+    path = require('path');
 
     Redis = require('redis');
+
     Pubsub = Redis.createClient();
+
     Pubsub.subscribe('hubot:incoming-imessage');
 
     var sqlite3 = require('sqlite3').verbose();
+
+    var imessagemodule = require('iMessageModule');
 
     var dir = process.env.HOME + '/Library/Messages/';
     var file = process.env.HOME + '/Library/Messages/chat.db';
@@ -233,7 +232,6 @@
                             console.error("Didn't send because of problem with message or user", chatter, message);
                         }
 
-
                         // could be used to clear applescript errors, parse message for "gtbot clear" or something like that
                         // applescript.execFile(__dirname + '/applescripts/send_return.AppleScript', [], function(err, result) {});
                     }
@@ -279,55 +277,24 @@
 
         // Use setInterval to continually check iMessage for new messages every 3 seconds
         iMessageAdapter.prototype.run = function () {
-            if (process.env.HUBOT_IMESSAGE_PARSE_DB_DIRECT) {
-                var imAdapter = this;
+            //this.allowedUsers = process.env.HUBOT_IMESSAGE_HANDLES.split(',');
+            Pubsub.on('message', (function (_this) {
+                return function (channel, dataString) {
+                    var data, msg, ref1, user;
+                    data = JSON.parse(dataString);
+                    //if (ref1 = data.userId, indexOf.call(_this.allowedUsers, ref1) >= 0) {
+                    user = _this.robot.brain.userForId(data.userId);
+                    user.name = data.name;
+                    user.room = 'iMessage';
+                    msg = ("" + data.message).replace("Gtbot", "gtbot");
+                    console.log("run: ", msg, data.name);
 
-                // Set the Last Seen ID
-                db.serialize(function () {
-                    db.all("SELECT MAX(ROWID) AS max FROM message", function (err, rows) {
-                        if (rows) {
-                            var max = rows[0].max;
-                            if (max > LAST_SEEN_ID) {
-                                LAST_SEEN_ID = max;
-                                return;
-                            }
-                        }
-                    }.bind(this));
-                }.bind(this));
-
-                setInterval(function () {
-                    db.serialize(function () {
-                        db.all("SELECT MAX(ROWID) AS max FROM message", function (err, rows) {
-                            if (rows && !sending) {
-                                var max = rows[0].max;
-                                if (max > LAST_SEEN_ID) {
-                                    for (LAST_SEEN_ID; LAST_SEEN_ID <= max; LAST_SEEN_ID++) {
-                                        imAdapter.checkMessageText(LAST_SEEN_ID);
-                                    }
-                                }
-                            }
-                        }.bind(this));
-                    }.bind(this));
-                }, 3000);
-            } else {
-                //this.allowedUsers = process.env.HUBOT_IMESSAGE_HANDLES.split(',');
-                Pubsub.on('message', (function (_this) {
-                    return function (channel, dataString) {
-                        var data, msg, ref1, user;
-                        data = JSON.parse(dataString);
-                        //if (ref1 = data.userId, indexOf.call(_this.allowedUsers, ref1) >= 0) {
-                            user = _this.robot.brain.userForId(data.userId);
-                            user.name = data.name;
-                            user.room = 'iMessage';
-                            msg = ("" + data.message).replace("Gtbot", "gtbot");
-                            console.log("run: ", msg);
-                            return _this.receive(new TextMessage(user, msg));
-                        //} else {
-                        //    return _this.robot.logger.info('Ignoring message from unauthorized iMessage user ' + data.userId);
-                        //}
-                    };
-                })(this));
-            }
+                    //return _this.receive(new TextMessage(user, msg));
+                    //} else {
+                    //    return _this.robot.logger.info('Ignoring message from unauthorized iMessage user ' + data.userId);
+                    //}
+                };
+            })(this));
 
             return this.emit('connected');
         };

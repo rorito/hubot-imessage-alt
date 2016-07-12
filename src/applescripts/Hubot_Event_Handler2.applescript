@@ -27,7 +27,7 @@ using terms from application "Messages"
 
 		do shell script "export PATH=/bin:/usr/bin:/usr/sbin:/sbin:/usr/local/bin && " & qScript & " " & qHandle & " " & qMessage & " " & qName
 
-		on log_event("message received from the buddy for thechat: " & qHandle & " " & qMessage, doLogTF)
+--		log_event("message received from the buddy for thechat: " & qHandle & " " & qMessage, doLogTF)
 	end message received
 
 	on chat room message received theMessage from theBuddy for theChat
@@ -44,9 +44,27 @@ using terms from application "Messages"
 
 		do shell script "export PATH=/bin:/usr/bin:/usr/sbin:/sbin:/usr/local/bin && " & qScript & " " & qHandle & " " & qMessage & " " & qName
 
-		on log_event("chat room message received from the buddy for thechat: " & qHandle & " " & qMessage, doLogTF)
+--		log_event("chat room message received from the buddy for thechat: " & qHandle & " " & qMessage, doLogTF)
 
 	end chat room message received
+
+  on active chat message received theMessage
+    set qMessage to quoted form of theMessage
+--    log_event("active chat room msg recieved: " & qMessage, doLogTF)
+  end active chat message received
+
+  on addressed chat room message received theMessage from theBuddy for theChat
+    set qMessage to quoted form of theMessage
+    set qHandle to quoted form of (handle of theBuddy as string)
+--    log_event("addressed chat room msg recieved: " & qHandle & " " & qMessage, doLogTF)
+  end addressed chat room message received
+
+  on addressed message received theMessage from theBuddy for theChat
+    set qMessage to quoted form of theMessage
+    set qHandle to quoted form of (handle of theBuddy as string)
+
+--    log_event("addressed message recieved: " & qHandle & " " & qMessage, doLogTF)
+  end addressed message received
 
 	-- Accept text chats but deny everything else
 
@@ -85,24 +103,6 @@ using terms from application "Messages"
 	on message sent theMessage for theChat
 
 	end message sent
-
-	on active chat message received theMessage
-		set qMessage to quoted form of theMessage
-		on log_event("active chat room msg recieved: " & qMessage, doLogTF)
-	end active chat message received
-
-	on addressed chat room message received theMessage from theBuddy for theChat
-		set qMessage to quoted form of theMessage
-		set qHandle to quoted form of (handle of theBuddy as string)
-		on log_event("addressed chat room msg recieved: " & qHandle & " " & qMessage, doLogTF)
-	end addressed chat room message received
-
-	on addressed message received theMessage from theBuddy for theChat
-		set qMessage to quoted form of theMessage
-		set qHandle to quoted form of (handle of theBuddy as string)
-
-		on log_event("addressed message recieved: " & qHandle & " " & qMessage, doLogTF)
-	end addressed message received
 
 	on av chat started
 
