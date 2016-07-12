@@ -250,7 +250,7 @@
             console.log("envelope.user.id: ", user);
 
             //this is a hack
-            if (envelope.user.startsWith("chat")) {
+            if (envelope.user.name.startsWith("chat")) {
                 //see if the chat identifier is a key in the GROUP_TEXTS JSON object we got from an env var
                 if (envelope.user in GROUP_TEXTS) {
                     var gt_users_string = GROUP_TEXTS[envelope.user].join(",");
