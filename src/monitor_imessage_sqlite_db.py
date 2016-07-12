@@ -77,7 +77,8 @@ while True:
 			redis_channel, 
 			json.dumps({
 				"name": sender_or_chat_identifier,
-				"message": message
+				"message": message,
+				"userId": sender_or_chat_identifier
 			})
 		)				
 		
