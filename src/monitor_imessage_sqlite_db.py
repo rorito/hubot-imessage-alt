@@ -70,8 +70,17 @@ while True:
 						sender_or_chat_identifier = row[7]
 
 		LAST_SEEN_ID += 1
-		
-		print "Message: " + str(LAST_SEEN_ID) + "-" + str(sender_or_chat_identifier) + "-" + message
+
+		log_chat = ""
+		log_message = ""
+
+		if sender_or_chat_identifier and isinstance(sender_or_chat_identifier, basestring):
+			log_chat = str(sender_or_chat_identifier)
+
+		if log_message and isinstance(log_message, basestring):
+			log_message = str(message)
+
+		print "Message: {0} - {1} - {2}".format(LAST_SEEN_ID, log_chat, log_message)
 		
 		r.publish(
 			redis_channel, 
